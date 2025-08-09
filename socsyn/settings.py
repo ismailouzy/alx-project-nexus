@@ -51,6 +51,13 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+GRAPHENE = {
+        'SCHEMA': 'feed.schema.schema',
+        'MIDDLEWARE': [
+            'graphql_jwt.middleware.JSONWebTokenMiddleware',
+            ],
+        }
+
 ROOT_URLCONF = 'socsyn.urls'
 
 TEMPLATES = [

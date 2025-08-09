@@ -1,4 +1,5 @@
 import graphene
+import graphql_jwt
 from graphene_django import DjangoObjectType
 from .models import Post, Comment, Interaction
 
@@ -51,8 +52,32 @@ class CreatePost(graphene.Mutation):
         return CreatePost(post=post)
 
 
+class CreateComment(graphene.Mutation):
+    comment = graphene.Field(CommentType)
+
+    class Arguments:
+        post_id = graphene.Int(required=True)
+        content = graphene.String(required=True)
+
+    def mutate(self, info, post_id, content):
+        user = info.context.user
+        if not user.is_authenticated:
+            raise Exception("you need to authenticate")
+        try:
+            post = Post.objects.get(id=post_id)
+        except Post.DoesNotExist:
+            raise Exception("post not found")
+        comment = Comment(post=post, author=user, content=content)
+        comment.save()
+        return CreateComment(comment=comment)
+
+
 class Mutation(graphene.ObjectType):
+    token_auth = graphql_jwt.ObtainJSONWebToken.Field()
+    verify_token = graphql_jwt.Verify.Field()
+    refresh_token = graphql_jwt.Refresh.Field()
     create_post = CreatePost.Field()
+    create_comment = CreateComment.Field()
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
