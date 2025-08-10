@@ -48,14 +48,26 @@ class Query(graphene.ObjectType):
 
         if data:
             print("hetre cache")
-            return [Post(**post) for post in json.loads(data)]
+            post_data = json.loads(data)
+            post_ids = [p['id'] for p in post_data]
+            return Post.objects.filter(id__in=post_ids).select_related(
+                    'author').prefetch_related('comments').order_by('-created')
 
         posts = Post.objects.select_related(
                 "author").prefetch_related("comments").order_by('-created')
-        cache.set(cache_k, json.dumps(list(posts.values())), timeout=60)
+        post_list = []
+        for post in posts:
+            post_list.append({
+                'id': post.id,
+                'content': post.content,
+                'author_id': post.author_id,
+                'author_username': post.author.username,
+                'created': post.created.isoformat(),
+                })
+        cache.set(cache_k, json.dumps(post_list), timeout=60)
         return posts
 
-    def resolve_by_id(self, info, id):
+    def resolve_post_by_id(self, info, id):
         return Post.objects.get(id=id)
 
     def resolve_following_feed(self, info, limit=None, offset=None):

@@ -59,12 +59,14 @@ GRAPHENE = {
         }
 
 CACHES = {
-        "defaut": "django_redis.cache.RedisCache",
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://127.0.0.1:6379/1",
-        "OPTION": {
+        "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            }
         }
+    }
+}
 
 ROOT_URLCONF = 'socsyn.urls'
 
