@@ -16,6 +16,7 @@ promise==2.3
 psycopg2-binary==2.9.10
 PyJWT==2.10.1
 python-dateutil==2.9.0.post0
+python-dotenv==1.1.1
 redis==6.4.0
 Rx==1.6.3
 singledispatch==4.1.2
