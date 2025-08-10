@@ -72,12 +72,40 @@ class CreateComment(graphene.Mutation):
         return CreateComment(comment=comment)
 
 
+class ToggleLike(graphene.Mutation):
+    post = graphene.Field(PostType)
+    liked = graphene.Boolean()
+
+    class Arguments:
+        post_id = graphene.Int(required=True)
+
+    def mutate(self, info, post_id):
+        user = info.context.user
+        if not user.is_authenticated:
+            raise Exception("You need to authenticate")
+        try:
+            post = Post.objects.get(id=post_id)
+        except Post.DoesNotExist:
+            raise Exception("Post not found")
+
+        like = Interaction.objects.filter(
+               post=post, user=user, Interaction_type='LIKE').first()
+        if like:
+            like.delete()
+            return ToggleLike(post=post, liked=False)
+        else:
+            Interaction.objects.create(
+                    post=post, user=user, Interaction_type='LIKE')
+            return ToggleLike(post=post, liked=True)
+
+
 class Mutation(graphene.ObjectType):
     token_auth = graphql_jwt.ObtainJSONWebToken.Field()
     verify_token = graphql_jwt.Verify.Field()
     refresh_token = graphql_jwt.Refresh.Field()
     create_post = CreatePost.Field()
     create_comment = CreateComment.Field()
+    toggle_like = ToggleLike.Field()
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
