@@ -1,7 +1,8 @@
 import graphene
 import graphql_jwt
 from graphene_django import DjangoObjectType
-from .models import Post, Comment, Interaction
+from .models import Post, Comment, Interaction, Follow
+from django.contrib.auth.models import User
 
 
 class PostType(DjangoObjectType):
@@ -29,12 +30,27 @@ class Query(graphene.ObjectType):
     post_by_id = graphene.Field(PostType, id=graphene.Int(required=True))
     user_posts = graphene.List(
             PostType, username=graphene.String(required=True))
+    following_feed = graphene.List(
+            PostType, limit=graphene.Int(), offset=graphene.Int())
 
     def resolve_all_posts(self, info):
         return Post.objects.all().order_by('-created')
 
     def resolve_by_id(self, info, id):
         return Post.objects.get(id=id)
+
+    def resolve_following_feed(self, info, limit=None, offset=None):
+        user = info.context.user
+        if not user.is_authenticated:
+            raise Exception("you need to authenticate")
+        follow_ids = Follow.objects.filter(follower=user).values_list(
+                'following', flat=True)
+        qs = Post.objects.filter(author__in=follow_ids).order_by('-created')
+        if offset:
+            qs = qs[offset:]
+        if limit:
+            qs = qs[:limit]
+        return qs
 
 
 class CreatePost(graphene.Mutation):
@@ -99,6 +115,31 @@ class ToggleLike(graphene.Mutation):
             return ToggleLike(post=post, liked=True)
 
 
+class FollowUser(graphene.Mutation):
+    ok = graphene.Boolean()
+    following_id = graphene.Int()
+
+    class Arguments:
+        username = graphene.String(required=True)
+
+    def mutate(self, info, username):
+        user = info.context.user
+        if not user.is_authenticated:
+            raise Exception('Authentication required')
+        try:
+            to_follow = User.objects.get(username=username)
+        except User.DoesNotExist:
+            raise Exception('User not found')
+        if to_follow == user:
+            raise Exception('Cannot follow yourself')
+        follow, created = Follow.objects.get_or_create(
+                follower=user, following=to_follow)
+        if not created:
+            follow.delete()
+            return FollowUser(ok=True, following_id=None)
+        return FollowUser(ok=True, following_id=to_follow.id)
+
+
 class Mutation(graphene.ObjectType):
     token_auth = graphql_jwt.ObtainJSONWebToken.Field()
     verify_token = graphql_jwt.Verify.Field()
@@ -106,6 +147,7 @@ class Mutation(graphene.ObjectType):
     create_post = CreatePost.Field()
     create_comment = CreateComment.Field()
     toggle_like = ToggleLike.Field()
+    follow_user = FollowUser.Field()
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
