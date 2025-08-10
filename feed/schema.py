@@ -3,14 +3,21 @@ import graphql_jwt
 from graphene_django import DjangoObjectType
 from .models import Post, Comment, Interaction, Follow
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+from graphql import GraphQLError
+
+
+class UserType(DjangoObjectType):
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email')
 
 
 class PostType(DjangoObjectType):
     class Meta:
         model = Post
         fields = (
-                'id',
-                'content', 'author', 'created', 'comments')
+                'id', 'content', 'author', 'created', 'comments')
 
 
 class CommentType(DjangoObjectType):
@@ -51,6 +58,27 @@ class Query(graphene.ObjectType):
         if limit:
             qs = qs[:limit]
         return qs
+
+
+class CreateUser(graphene.Mutation):
+    user = graphene.Field(UserType)
+
+    class Arguments:
+        username = graphene.String(required=True)
+        email = graphene.String(required=True)
+        password = graphene.String(required=True)
+
+    def mutate(self, info, username, email, password):
+        if User.objects.filter(username=username).exists():
+            raise GraphQLError("Username already taken")
+        if User.objects.filter(email=email).exists():
+            raise GraphQLError("Email already registered")
+
+        validate_password(password)
+        user = User(username=username, email=email)
+        user.set_password(password)
+        user.save()
+        return CreateUser(user=user)
 
 
 class CreatePost(graphene.Mutation):
@@ -141,6 +169,7 @@ class FollowUser(graphene.Mutation):
 
 
 class Mutation(graphene.ObjectType):
+    create_user = CreateUser.Field()
     token_auth = graphql_jwt.ObtainJSONWebToken.Field()
     verify_token = graphql_jwt.Verify.Field()
     refresh_token = graphql_jwt.Refresh.Field()
