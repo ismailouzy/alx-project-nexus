@@ -64,99 +64,230 @@ The **ProDev Backend Engineering Program** is an intensive training initiative d
 - **Scalability Patterns**: Horizontal and vertical scaling
 - **Monitoring & Logging**: Tracking application health
 
+## 🚀 GraphQL API Usage
+
+This project includes a **GraphQL API** for interacting with posts, users, and social features.
+
+### 1. Running the API
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run migrations
+python manage.py migrate
+
+# Start the development server
+python manage.py runserver
+```
+
+Once the server is running, open:
+
+```
+http://localhost:8000/graphql
+```
+
+You will see the **GraphQL Playground** for testing queries and mutations.
+
+---
+
+### 2. Example Queries
+
+#### Fetch all posts with authors
+
+```graphql
+query {
+  allPosts {
+    id
+    content
+    author {
+      id
+      username
+    }
+  }
+}
+```
+
+#### Fetch a single post by ID
+
+```graphql
+query {
+  postById(id: 1) {
+    id
+    title
+    content
+    author {
+      username
+    }
+    comments {
+      id
+      content
+      author {
+        username
+      }
+    }
+  }
+}
+```
+
+---
+
+### 3. Example Mutations
+
+#### Create a new user
+
+```graphql
+mutation {
+  createUser(username: "bob", email: "bob@example.com", password: "azerty") {
+    user {
+      id
+      username
+      email
+    }
+  }
+}
+```
+
+#### Create a new post
+
+```graphql
+mutation {
+  createPost(content: "Hello i'm bob, this is my first post.") {
+    post {
+      id
+      content
+    }
+  }
+}
+```
+
+#### Like a post
+
+```graphql
+mutation {
+  toggleLike(postId: 1) {
+    liked
+    post {
+      id
+      content
+    }
+  }
+}
+```
+
+---
+
+### 4. Authentication
+
+* The API uses **JWT authentication**.
+* Obtain a token using the login mutation, then pass it in the `Authorization` header:
+
+```
+Authorization: JWT <your_token>
+```
+
+---
+
 ## 🚧 Challenges & Solutions
 
 ### 1. Database Performance Optimization
-**Problem**: Slow queries impacting response times  
+
+**Problem**: Slow queries impacting response times
 **Solution**:
-- Added indexing on frequently queried fields
-- Optimized Django ORM with `select_related` and `prefetch_related`
-- Implemented Redis caching for high-traffic data
+
+* Added indexing on frequently queried fields
+* Optimized Django ORM with `select_related` and `prefetch_related`
+* Implemented Redis caching for high-traffic data
 
 ### 2. API Rate Limiting
-**Problem**: High traffic and potential endpoint abuse  
-**Solution**:
-- Used Django REST Framework throttling
-- Built custom rate-limiting middleware
-- Set up monitoring for traffic anomalies
 
-### 3. Asynchronous Task Processing
-**Problem**: Long-running tasks blocking the main thread  
+**Problem**: High traffic and potential endpoint abuse
 **Solution**:
-- Integrated Celery with RabbitMQ for background tasks
-- Added task monitoring and failure handling
-- Implemented retry mechanisms for failed tasks
 
-### 4. Container Orchestration
-**Problem**: Managing microservices across environments  
-**Solution**:
-- Dockerized applications for consistency
-- Used Docker Compose for local development
-- Established CI/CD pipelines for automated deployment
+* Used Django Graphql
+* Built custom rate-limiting middleware
+* Set up monitoring for traffic anomalies
+
 
 ## 💡 Best Practices
 
 ### Code Quality
-- Adhere to **PEP 8** for consistent Python styling
-- Write comprehensive unit, integration, and API tests
-- Conduct peer code reviews for quality assurance
-- Maintain clear, detailed code documentation
+
+* Adhere to **PEP 8** for consistent Python styling
+* Write comprehensive unit, integration, and API tests
+* Conduct peer code reviews for quality assurance
+* Maintain clear, detailed code documentation
 
 ### Security
-- Validate and sanitize all user inputs
-- Implement robust authentication mechanisms
-- Use HTTPS in production environments
-- Store sensitive data in environment variables
+
+* Validate and sanitize all user inputs
+* Implement robust authentication mechanisms
+* Use HTTPS in production environments
+* Store sensitive data in environment variables
 
 ### Performance
-- Regularly analyze and optimize database queries
-- Implement multi-layer caching strategies
-- Monitor performance with continuous alerting
-- Conduct regular load testing
+
+* Regularly analyze and optimize database queries
+* Implement multi-layer caching strategies
+* Monitor performance with continuous alerting
+* Conduct regular load testing
 
 ### Deployment
-- Use **Infrastructure as Code** (e.g., Terraform)
-- Adopt **blue-green deployment** to minimize downtime
-- Implement automated backups with recovery testing
-- Ensure comprehensive monitoring and logging
+
+* Use **Infrastructure as Code** (e.g., Terraform)
+* Adopt **blue-green deployment** to minimize downtime
+* Implement automated backups with recovery testing
+* Ensure comprehensive monitoring and logging
 
 ## 📚 Resources
 
 ### Official Documentation
-- [Django Documentation](https://docs.djangoproject.com/)
-- [Django REST Framework](https://www.django-rest-framework.org/)
-- [Docker Documentation](https://docs.docker.com/)
-- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
+
+* [Django Documentation](https://docs.djangoproject.com/)
+* [Django REST Framework](https://www.django-rest-framework.org/)
+* [Docker Documentation](https://docs.docker.com/)
+* [PostgreSQL Documentation](https://www.postgresql.org/docs/)
 
 ### Recommended Reading
-- *Two Scoops of Django* (Django best practices)
-- *Designing Data-Intensive Applications* (system design)
-- *Clean Code* (maintainable code principles)
-- *System Design Interview* (scalability concepts)
+
+* *Two Scoops of Django* (Django best practices)
+* *Designing Data-Intensive Applications* (system design)
+* *Clean Code* (maintainable code principles)
+* *System Design Interview* (scalability concepts)
 
 ## 🔗 Repository Structure
 
 ```
-alx-project-nexus/
+socsyn/
+├── manage.py
+├── requirements.txt
+├── docker-compose.yml
+├── Dockerfile
+├── .env.example
+├── .gitignore
 ├── README.md
-├── docs/
-│   ├── api-documentation/
-│   ├── system-design/
-│   └── deployment-guides/
-├── examples/
-│   ├── django-projects/
-│   ├── api-samples/
-│   └── docker-configurations/
-└── resources/
-    ├── cheat-sheets/
-    ├── troubleshooting/
-    └── learning-materials/
+├── socsyn/
+│   ├── __init__.py
+│   ├── settings.py
+│   ├── urls.py
+│   ├── wsgi.py
+│   ├── asgi.py
+├── feed/
+│   ├── __init__.py
+│   ├── admin.py
+│   ├── apps.py
+│   ├── models.py
+│   ├── views.py
+│   ├── urls.py
+│   ├── schema.py
+│   ├── tasks.py
+│   └── migrations/
+│       └── __init__.py
 ```
 
 ## 🎯 Future Enhancements
-- Explore advanced system design (Microservices, Event Sourcing, CQRS)
-- Integrate MLOps for machine learning model deployment
-- Enhance security with OAuth2, JWT, and API best practices
-- Optimize performance through advanced caching and sharding
-- Adopt cloud-native technologies like Kubernetes and serverless
 
+* Explore advanced system design (Microservices, Event Sourcing, CQRS)
+* Integrate MLOps for machine learning model deployment
+* Enhance security with OAuth2, JWT, and API best practices
+* Optimize performance through advanced caching and sharding
+* Adopt cloud-native technologies like Kubernetes and serverless
