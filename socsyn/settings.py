@@ -31,6 +31,11 @@ DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 't')
 
 ALLOWED_HOSTS = ['*']
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://alx-project-nexus-mnf2.onrender.com',
+]
+
+
 
 # Application definition
 
