@@ -5,6 +5,8 @@ from .models import Post, Comment, Interaction, Follow
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from graphql import GraphQLError
+from django.core.cache import cache
+import json
 
 
 class UserType(DjangoObjectType):
@@ -41,7 +43,17 @@ class Query(graphene.ObjectType):
             PostType, limit=graphene.Int(), offset=graphene.Int())
 
     def resolve_all_posts(self, info):
-        return Post.objects.all().order_by('-created')
+        cache_k = "all_posts"
+        data = cache.get(cache_k)
+
+        if data:
+            print("hetre cache")
+            return [Post(**post) for post in json.loads(data)]
+
+        posts = Post.objects.select_related(
+                "author").prefetch_related("comments").order_by('-created')
+        cache.set(cache_k, json.dumps(list(posts.values())), timeout=60)
+        return posts
 
     def resolve_by_id(self, info, id):
         return Post.objects.get(id=id)
